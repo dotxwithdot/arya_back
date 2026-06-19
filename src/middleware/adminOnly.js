@@ -1,3 +1,3 @@
-import { protect, requireAdmin } from "./authMiddleware.js";
+import { protect } from "./authMiddleware.js";
 
-export const adminOnly = [protect, requireAdmin];
+export const adminOnly = [protect];

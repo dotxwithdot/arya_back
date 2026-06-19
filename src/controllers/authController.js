@@ -107,8 +107,8 @@ export const loginAdmin = asyncHandler(async (req, res) => {
     throw new AppError("Invalid login credentials", 401);
   }
 
-  if (!user.isActive || user.role !== "admin") {
-    throw new AppError("Admin account is not authorized", 403);
+  if (!user.isActive) {
+    throw new AppError("Account is not active", 403);
   }
 
   user.lastLoginAt = new Date();

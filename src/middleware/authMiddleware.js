@@ -15,14 +15,14 @@ export const protect = asyncHandler(async (req, _res, next) => {
   const token = getCookieValue(req.headers.cookie, "admin_token");
 
   if (!token) {
-    throw new AppError("Authentication token is required", 401);
+    throw new AppError("Please login to continue", 401);
   }
 
   let decoded;
   try {
     decoded = jwt.verify(token, process.env.JWT_SECRET);
   } catch (_error) {
-    throw new AppError("Invalid or expired authentication token", 401);
+    throw new AppError("Please login again to continue", 401);
   }
 
   const user = await User.findById(decoded.sub);
@@ -33,10 +33,3 @@ export const protect = asyncHandler(async (req, _res, next) => {
   req.user = user;
   next();
 });
-
-export function requireAdmin(req, _res, next) {
-  if (!req.user || req.user.role !== "admin") {
-    throw new AppError("Admin authorization required", 403);
-  }
-  next();
-}
