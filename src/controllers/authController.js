@@ -77,11 +77,8 @@ export const registerAdmin = asyncHandler(async (req, res) => {
   user.lastLoginAt = new Date();
   await user.save({ validateBeforeSave: false });
 
-  const token = createToken(user);
-  setAuthCookie(res, token);
-
-  return sendSuccess(res, 201, "Admin created successfully", {
-    token,
+  clearAuthCookie(res);
+  return sendSuccess(res, 201, "Admin created successfully. Please login to continue.", {
     user: user.toJSON(),
   });
 });
@@ -121,7 +118,6 @@ export const loginAdmin = asyncHandler(async (req, res) => {
   setAuthCookie(res, token);
 
   return sendSuccess(res, 200, "Login successful", {
-    token,
     user: user.toJSON(),
   });
 });

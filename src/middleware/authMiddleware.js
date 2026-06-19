@@ -12,10 +12,7 @@ function getCookieValue(cookieHeader, name) {
 }
 
 export const protect = asyncHandler(async (req, _res, next) => {
-  const authHeader = req.headers.authorization || "";
-  const [scheme, bearerToken] = authHeader.split(" ");
-  const cookieToken = getCookieValue(req.headers.cookie, "admin_token");
-  const token = cookieToken || (scheme === "Bearer" ? bearerToken : "");
+  const token = getCookieValue(req.headers.cookie, "admin_token");
 
   if (!token) {
     throw new AppError("Authentication token is required", 401);
