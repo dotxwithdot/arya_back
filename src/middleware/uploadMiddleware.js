@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import multer from "multer";
-import AppError from "../utils/appError.js";
 
 const productUploadRoot = path.resolve("uploads", "products");
 const categoryUploadRoot = path.resolve("uploads", "categories");
@@ -24,28 +23,18 @@ const storage = multer.diskStorage({
   },
 });
 
-function fileFilter(_req, file, callback) {
-  if (!file.mimetype.startsWith("image/")) {
-    callback(new AppError("Only image files are allowed", 422));
-    return;
-  }
-  callback(null, true);
-}
-
 export const uploadProductImages = multer({
   storage,
-  fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024,
+    fileSize: 15 * 1024 * 1024,
     files: 6,
   },
 }).array("images", 6);
 
 export const uploadCategoryImage = multer({
   storage,
-  fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024,
+    fileSize: 15 * 1024 * 1024,
     files: 1,
   },
 }).single("image");

@@ -99,7 +99,7 @@ async function buildProductQuery(req) {
     if (req.query.maxPrice) query.price.$lte = Number(req.query.maxPrice);
   }
 
-  if (req.query.deal === "299") query.price = 299;
+  if (req.query.deal === "499") query.price = { $lte: 499 };
   if (req.query.featured === "true") query.isFeatured = true;
 
   return query;
