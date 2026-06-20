@@ -14,11 +14,13 @@ function validatePassword(password) {
   return typeof password === "string" && password.length >= 8;
 }
 
-function getCookieOptions() {
+function getCookieOptions(req) {
   const isProduction = process.env.NODE_ENV === "production";
-  const hasHttpsFrontend = String(process.env.FRONTEND_URL || "").includes("https://");
+  const origin = String(req?.get("origin") || process.env.FRONTEND_URL || "");
+  const hasHttpsFrontend = origin.includes("https://");
+  const hasLocalFrontend = /localhost|127\.0\.0\.1/.test(origin);
   const isRender = process.env.RENDER === "true";
-  const secureCookie = isProduction || hasHttpsFrontend || isRender;
+  const secureCookie = hasHttpsFrontend || isRender || (isProduction && !hasLocalFrontend);
   return {
     httpOnly: true,
     secure: secureCookie,
@@ -28,15 +30,13 @@ function getCookieOptions() {
   };
 }
 
-function setAuthCookie(res, token) {
-  res.cookie("admin_token", token, getCookieOptions());
+function setAuthCookie(req, res, token) {
+  res.cookie("admin_token", token, getCookieOptions(req));
 }
 
-function clearAuthCookie(res) {
-  res.clearCookie("admin_token", {
-    ...getCookieOptions(),
-    maxAge: undefined,
-  });
+function clearAuthCookie(req, res) {
+  const { maxAge: _maxAge, ...options } = getCookieOptions(req);
+  res.clearCookie("admin_token", options);
 }
 
 export const registerAdmin = asyncHandler(async (req, res) => {
@@ -77,7 +77,7 @@ export const registerAdmin = asyncHandler(async (req, res) => {
   user.lastLoginAt = new Date();
   await user.save({ validateBeforeSave: false });
 
-  clearAuthCookie(res);
+  clearAuthCookie(req, res);
   return sendSuccess(res, 201, "Admin created successfully. Please login to continue.", {
     user: user.toJSON(),
   });
@@ -115,15 +115,15 @@ export const loginAdmin = asyncHandler(async (req, res) => {
   await user.save({ validateBeforeSave: false });
 
   const token = createToken(user);
-  setAuthCookie(res, token);
+  setAuthCookie(req, res, token);
 
   return sendSuccess(res, 200, "Login successful", {
     user: user.toJSON(),
   });
 });
 
-export const logoutAdmin = asyncHandler(async (_req, res) => {
-  clearAuthCookie(res);
+export const logoutAdmin = asyncHandler(async (req, res) => {
+  clearAuthCookie(req, res);
   return sendSuccess(res, 200, "Logout successful");
 });
 
