@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Category from "../models/Category.js";
 import Product from "../models/Product.js";
+import { uploadImageBuffer } from "../config/cloudinary.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import AppError from "../utils/appError.js";
 import asyncHandler from "../utils/asyncHandler.js";
@@ -16,9 +17,18 @@ function toBoolean(value, defaultValue = false) {
   return ["true", "1", "yes", "on"].includes(String(value).toLowerCase());
 }
 
-function uploadedImageUrls(req) {
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
-  return (req.files || []).map((file) => `${baseUrl}/uploads/products/${file.filename}`);
+async function uploadedImageUrls(req) {
+  const uploads = await Promise.all(
+    (req.files || []).map((file) =>
+      uploadImageBuffer(file.buffer, {
+        context: {
+          original_filename: file.originalname,
+        },
+      }),
+    ),
+  );
+
+  return uploads.map((upload) => upload.secure_url);
 }
 
 function parseArray(value) {
@@ -150,7 +160,7 @@ export const getProduct = asyncHandler(async (req, res) => {
 
 export const createProduct = asyncHandler(async (req, res) => {
   const payload = normalizeProductPayload(req.body);
-  const imageUrls = uploadedImageUrls(req);
+  const imageUrls = await uploadedImageUrls(req);
   if (imageUrls.length) {
     payload.image = imageUrls[0];
     payload.images = imageUrls;
@@ -178,7 +188,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
   if (!product) throw new AppError("Product not found", 404);
 
   const payload = normalizeProductPayload({ ...product.toObject(), ...req.body });
-  const imageUrls = uploadedImageUrls(req);
+  const imageUrls = await uploadedImageUrls(req);
   if (imageUrls.length) {
     payload.image = imageUrls[0];
     payload.images = imageUrls;
